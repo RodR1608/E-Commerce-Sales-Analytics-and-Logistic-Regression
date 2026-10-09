@@ -1,0 +1,2 @@
+﻿criterio,umbral_seleccionado,precision_validacion,recall_validacion,f1_validacion,falsos_positivos_validacion,falsos_negativos_validacion
+Maximo F1 en validacion temporal,0.5,0.08187119211358941,0.6072536850271528,0.14428903891794742,35112.0,2025.0
