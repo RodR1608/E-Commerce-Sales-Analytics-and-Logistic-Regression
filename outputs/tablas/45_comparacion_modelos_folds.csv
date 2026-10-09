@@ -1,0 +1,7 @@
+﻿fold,modelo,train_filas,validacion_filas,fecha_inicio_validacion,fecha_fin_validacion,auc_roc
+1,Regresion_Logistica,24446,24352,2022-01-01,2022-12-31,0.5552224541115722
+1,Dummy_Prior,24446,24352,2022-01-01,2022-12-31,0.5
+2,Regresion_Logistica,48798,24428,2023-01-01,2023-12-31,0.561953580733661
+2,Dummy_Prior,48798,24428,2023-01-01,2023-12-31,0.5
+3,Regresion_Logistica,73226,24347,2024-01-01,2024-12-30,0.5703513524476683
+3,Dummy_Prior,73226,24347,2024-01-01,2024-12-30,0.5
