@@ -10,7 +10,8 @@ import plotly.graph_objects as go
 
 
 # ============================================================
-# DASHBOARD TAF V2.2
+# DASHBOARD TAF V2.3
+# E-COMMERCE SALES ANALYTICS
 # BUSINESS DATA & AI STRATEGY
 # ============================================================
 
@@ -21,13 +22,19 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
+# ============================================================
+# 1. RUTAS DEL PROYECTO
+# ============================================================
+
 BASE = Path(__file__).resolve().parent.parent
+
 DATA = BASE / "data" / "processed"
 TABLAS = BASE / "outputs" / "tablas"
 
 
 # ============================================================
-# 1. PALETA CORPORATIVA
+# 2. PALETA CORPORATIVA
 # ============================================================
 
 BG = "#041333"
@@ -43,12 +50,18 @@ GREEN = "#27D6B3"
 
 WHITE = "#F5FAFF"
 MUTED = "#9BB2CE"
+
 ORANGE = "#F6A85F"
 RED = "#FF7185"
 
 PALETTE = [
-    CYAN, BLUE, GREEN, TURQUOISE,
-    ORANGE, "#8D9BFF", RED
+    CYAN,
+    BLUE,
+    GREEN,
+    TURQUOISE,
+    ORANGE,
+    "#8D9BFF",
+    RED
 ]
 
 STATUS_COLORS = {
@@ -58,7 +71,7 @@ STATUS_COLORS = {
 
 
 # ============================================================
-# 2. ESTILOS GENERALES Y FILTROS EJECUTIVOS
+# 3. CSS
 # ============================================================
 
 st.markdown(
@@ -221,8 +234,7 @@ st.markdown(
         border-color: {CYAN};
     }}
 
-    div[data-testid="stSelectbox"] > div > div,
-    div[data-testid="stMultiSelect"] > div > div {{
+    div[data-testid="stSelectbox"] > div > div {{
         background-color: {CARD_ALT};
         border-color: {BORDER};
     }}
@@ -243,13 +255,18 @@ st.markdown(
 
 
 # ============================================================
-# 3. CARGAR INFORMACIÓN
+# 4. CARGA DE ARCHIVOS
 # ============================================================
 
 @st.cache_data
 def leer_csv(ruta):
+
     if ruta.exists():
-        return pd.read_csv(ruta, low_memory=False)
+        return pd.read_csv(
+            ruta,
+            low_memory=False
+        )
+
     return None
 
 
@@ -258,10 +275,12 @@ df = leer_csv(
 )
 
 if df is None:
+
     st.error(
-        "No se encontró "
+        "No se encontró el archivo "
         "data/processed/dataset_analitico_validado.csv"
     )
+
     st.stop()
 
 
@@ -295,7 +314,7 @@ umbral_seleccionado = leer_csv(
 
 
 # ============================================================
-# 4. PREPARACIÓN DE LOS DATOS
+# 5. VALIDACIÓN Y PREPARACIÓN DEL DATASET
 # ============================================================
 
 obligatorias = [
@@ -305,13 +324,19 @@ obligatorias = [
 ]
 
 faltantes = [
-    c for c in obligatorias
-    if c not in df.columns
+    columna
+    for columna in obligatorias
+    if columna not in df.columns
 ]
 
 if faltantes:
-    st.error(f"Columnas faltantes: {faltantes}")
+
+    st.error(
+        f"Columnas faltantes: {faltantes}"
+    )
+
     st.stop()
+
 
 df["order_date"] = pd.to_datetime(
     df["order_date"],
@@ -332,8 +357,13 @@ df = df[
 ].copy()
 
 if df.empty:
-    st.error("No existen órdenes válidas.")
+
+    st.error(
+        "No existen órdenes válidas."
+    )
+
     st.stop()
+
 
 df["target"] = df["target"].astype(int)
 
@@ -351,15 +381,20 @@ df["dia_semana"] = (
     df["order_date"].dt.dayofweek
 )
 
-for columna in [
+
+columnas_numericas = [
     "customer_age",
     "customer_order_count",
     "customer_recency",
     "order_quantity",
     "order_gross_sales",
     "shipping_cost_ratio"
-]:
+]
+
+for columna in columnas_numericas:
+
     if columna in df.columns:
+
         df[columna] = pd.to_numeric(
             df[columna],
             errors="coerce"
@@ -367,7 +402,7 @@ for columna in [
 
 
 # ============================================================
-# 5. FUNCIONES VISUALES
+# 6. FUNCIONES VISUALES
 # ============================================================
 
 def tema(fig, titulo="", altura=370):
@@ -386,7 +421,10 @@ def tema(fig, titulo="", altura=370):
         colorway=PALETTE,
         height=altura,
         margin=dict(
-            l=35, r=25, t=65, b=40
+            l=35,
+            r=25,
+            t=65,
+            b=40
         ),
         legend=dict(
             bgcolor="rgba(0,0,0,0)",
@@ -416,6 +454,7 @@ def tema(fig, titulo="", altura=370):
 
 
 def mostrar(fig):
+
     st.plotly_chart(
         fig,
         use_container_width=True
@@ -424,57 +463,67 @@ def mostrar(fig):
 
 def titulo_pagina(titulo, subtitulo):
 
+    contenido = (
+        '<div class="hero">'
+        f'<div class="hero-title">{html.escape(str(titulo))}</div>'
+        f'<div class="hero-sub">{html.escape(str(subtitulo))}</div>'
+        '</div>'
+    )
+
     st.markdown(
-        f"""
-        <div class="hero">
-            <div class="hero-title">
-                {html.escape(titulo)}
-            </div>
-            <div class="hero-sub">
-                {html.escape(subtitulo)}
-            </div>
-        </div>
-        """,
+        contenido,
         unsafe_allow_html=True
     )
 
 
 def tarjeta(nombre, valor, nota=""):
 
+    # ====================================================
+    # CORRECCIÓN V2.3
+    # HTML en una sola cadena sin saltos ni indentaciones.
+    # Evita que Streamlit muestre etiquetas </div>.
+    # ====================================================
+
+    contenido = (
+        '<div class="kpi">'
+        f'<div class="kpi-label">{html.escape(str(nombre))}</div>'
+        f'<div class="kpi-value">{html.escape(str(valor))}</div>'
+        f'<div class="kpi-note">{html.escape(str(nota))}</div>'
+        '</div>'
+    )
+
     st.markdown(
-        f"""
-        <div class="kpi">
-            <div class="kpi-label">
-                {html.escape(str(nombre))}
-            </div>
-            <div class="kpi-value">
-                {html.escape(str(valor))}
-            </div>
-            <div class="kpi-note">
-                {html.escape(str(nota))}
-            </div>
-        </div>
-        """,
+        contenido,
         unsafe_allow_html=True
     )
 
 
 def aviso(mensaje):
 
+    contenido = (
+        '<div class="insight">'
+        f'{html.escape(str(mensaje))}'
+        '</div>'
+    )
+
     st.markdown(
-        f"""
-        <div class="insight">
-            {html.escape(str(mensaje))}
-        </div>
-        """,
+        contenido,
         unsafe_allow_html=True
     )
 
 
+# ============================================================
+# 7. FUNCIONES ANALÍTICAS
+# ============================================================
+
 def tasa_cancelacion(datos):
+
     if datos.empty:
         return 0.0
-    return float(datos["target"].mean() * 100)
+
+    return float(
+        datos["target"].mean() * 100
+    )
 
 
 def resumen_grupo(datos, columna):
@@ -490,6 +539,14 @@ def resumen_grupo(datos, columna):
         )
         .reset_index()
     )
+
+    if resultado.empty:
+
+        resultado["tasa"] = pd.Series(
+            dtype=float
+        )
+
+        return resultado
 
     resultado["tasa"] = (
         resultado["canceladas"]
@@ -508,9 +565,11 @@ def grafico_tasa(
 ):
 
     if columna not in datos.columns:
+
         st.info(
             f"No disponible: {columna}"
         )
+
         return
 
     agrupado = resumen_grupo(
@@ -519,16 +578,25 @@ def grafico_tasa(
     )
 
     if agrupado.empty:
-        st.info("Sin datos para este gráfico.")
+
+        st.info(
+            "Sin datos para este gráfico."
+        )
+
         return
 
-    # CORRECCIÓN: categorías Interval -> texto.
-    # Conserva los valores estadísticos originales.
+    # ====================================================
+    # CORRECCIÓN V2.3
+    # Convierte pandas.Interval en texto antes de Plotly.
+    # No modifica los cálculos estadísticos.
+    # ====================================================
+
     agrupado[columna] = (
         agrupado[columna].astype(str)
     )
 
     if ordenar:
+
         agrupado = agrupado.sort_values(
             "tasa",
             ascending=False
@@ -558,7 +626,12 @@ def grafico_tasa(
         marker_line_width=0
     )
 
-    mostrar(tema(fig, titulo))
+    mostrar(
+        tema(
+            fig,
+            titulo
+        )
+    )
 
 
 def grafico_box(datos, columna, titulo):
@@ -573,12 +646,12 @@ def grafico_box(datos, columna, titulo):
     if visual.empty:
         return
 
-    visual["Estado"] = visual[
-        "target"
-    ].map({
-        0: "Completed",
-        1: "Cancelled"
-    })
+    visual["Estado"] = (
+        visual["target"].map({
+            0: "Completed",
+            1: "Cancelled"
+        })
+    )
 
     fig = px.box(
         visual,
@@ -589,7 +662,12 @@ def grafico_box(datos, columna, titulo):
         points=False
     )
 
-    mostrar(tema(fig, titulo))
+    mostrar(
+        tema(
+            fig,
+            titulo
+        )
+    )
 
 
 def obtener_metrica(nombre):
@@ -597,6 +675,7 @@ def obtener_metrica(nombre):
     if metricas is None or metricas.empty:
         return None
 
+    # Formato vertical
     if {
         "metrica",
         "valor"
@@ -610,11 +689,14 @@ def obtener_metrica(nombre):
         ]
 
         if not registros.empty:
+
             return float(
                 registros.iloc[0]["valor"]
             )
 
+    # Formato horizontal
     if nombre in metricas.columns:
+
         return float(
             metricas.iloc[0][nombre]
         )
@@ -636,10 +718,12 @@ def formato_metrica(nombre, porcentaje=False):
 
 
 # ============================================================
-# 6. NAVEGACIÓN LATERAL
+# 8. NAVEGACIÓN LATERAL
 # ============================================================
 
-st.sidebar.markdown("## ◈ E-COMMERCE")
+st.sidebar.markdown(
+    "## ◈ E-COMMERCE"
+)
 
 st.sidebar.caption(
     "BUSINESS DATA & AI STRATEGY"
@@ -672,7 +756,7 @@ st.sidebar.caption(
 
 
 # ============================================================
-# 7. ESTADO DE LOS FILTROS
+# 9. VALORES DISPONIBLES PARA FILTROS
 # ============================================================
 
 ANIOS = sorted(
@@ -704,37 +788,56 @@ SEGMENTOS = (
     else []
 )
 
+
+# ============================================================
+# 10. ESTADO DE FILTROS
+# ============================================================
+
 if "filtro_anios" not in st.session_state:
+
     st.session_state.filtro_anios = ANIOS.copy()
 
 if "filtro_canal" not in st.session_state:
+
     st.session_state.filtro_canal = "Todos"
 
 if "filtro_segmento" not in st.session_state:
+
     st.session_state.filtro_segmento = "Todos"
 
 
 def alternar_anio(anio):
 
-    actuales = st.session_state.filtro_anios.copy()
+    actuales = (
+        st.session_state.filtro_anios.copy()
+    )
 
     if anio in actuales:
+
         actuales.remove(anio)
+
     else:
+
         actuales.append(anio)
 
-    st.session_state.filtro_anios = sorted(actuales)
+    st.session_state.filtro_anios = (
+        sorted(actuales)
+    )
 
 
 def restablecer_filtros():
 
-    st.session_state.filtro_anios = ANIOS.copy()
+    st.session_state.filtro_anios = (
+        ANIOS.copy()
+    )
+
     st.session_state.filtro_canal = "Todos"
+
     st.session_state.filtro_segmento = "Todos"
 
 
 # ============================================================
-# 8. TÍTULO DE LA PÁGINA
+# 11. TÍTULO DE CADA VISTA
 # ============================================================
 
 TITULOS = {
@@ -772,31 +875,28 @@ titulo_pagina(
 
 
 # ============================================================
-# 9. PANEL EJECUTIVO DE FILTROS
+# 12. PANEL EJECUTIVO DE FILTROS
 # ============================================================
 
 with st.container(border=True):
 
     st.markdown(
-        """
-        <div class="filter-header">
-            <div class="filter-icon">☷</div>
-            <div>
-                <div class="filter-title">
-                    Panel de control
-                </div>
-                <div class="filter-sub">
-                    FILTROS DE ANÁLISIS
-                </div>
-            </div>
-        </div>
-        """,
+        (
+            '<div class="filter-header">'
+            '<div class="filter-icon">☷</div>'
+            '<div>'
+            '<div class="filter-title">Panel de control</div>'
+            '<div class="filter-sub">FILTROS DE ANÁLISIS</div>'
+            '</div>'
+            '</div>'
+        ),
         unsafe_allow_html=True
     )
 
-    st.caption("Periodo de análisis")
+    st.caption(
+        "Periodo de análisis"
+    )
 
-    # Selector de años con botones
     columnas_anios = st.columns(
         max(1, len(ANIOS))
     )
@@ -830,33 +930,36 @@ with st.container(border=True):
     c1, c2, c3 = st.columns(
         [2.2, 2.2, 1.2]
     )
-with c1:
 
-    st.selectbox(
-        "Canal de venta",
-        options=["Todos"] + CANALES,
-        key="filtro_canal"
-    )
+    with c1:
 
-with c2:
+        st.selectbox(
+            "Canal de venta",
+            options=["Todos"] + CANALES,
+            key="filtro_canal"
+        )
 
-    st.selectbox(
-        "Segmento de cliente",
-        options=["Todos"] + SEGMENTOS,
-        key="filtro_segmento"
-    )
+    with c2:
 
-with c3:
+        st.selectbox(
+            "Segmento de cliente",
+            options=["Todos"] + SEGMENTOS,
+            key="filtro_segmento"
+        )
 
-    st.write("")
+    with c3:
 
-    st.button(
-        "↻ Restablecer",
-        on_click=restablecer_filtros,
-        use_container_width=True
-    )
+        st.write("")
+
+        st.button(
+            "↻ Restablecer",
+            on_click=restablecer_filtros,
+            use_container_width=True
+        )
+
+
 # ============================================================
-# 10. APLICACIÓN DE FILTROS
+# 13. APLICACIÓN DE LOS FILTROS
 # ============================================================
 
 filtrado = df[
@@ -864,6 +967,7 @@ filtrado = df[
         st.session_state.filtro_anios
     )
 ].copy()
+
 
 if (
     "sales_channel" in filtrado.columns
@@ -875,6 +979,7 @@ if (
         == st.session_state.filtro_canal
     ]
 
+
 if (
     "customer_segment" in filtrado.columns
     and st.session_state.filtro_segmento != "Todos"
@@ -885,23 +990,25 @@ if (
         == st.session_state.filtro_segmento
     ]
 
+
 total = len(filtrado)
 
+
 st.markdown(
-    f"""
-    <div class="filter-footer">
-        <span class="filter-count">
-            {total:,} órdenes seleccionadas
-        </span>
-        &nbsp;&nbsp;
-        Los filtros se aplican a los análisis
-        descriptivos.
-    </div>
-    """,
+    (
+        '<div class="filter-footer">'
+        '<span class="filter-count">'
+        f'{total:,} órdenes seleccionadas'
+        '</span>'
+        '&nbsp;&nbsp;'
+        'Los filtros se aplican a los análisis descriptivos.'
+        '</div>'
+    ),
     unsafe_allow_html=True
 )
 
 st.write("")
+
 
 if filtrado.empty:
 
@@ -914,7 +1021,7 @@ if filtrado.empty:
 
 
 # ============================================================
-# 11. INDICADORES BASE
+# 14. INDICADORES GENERALES
 # ============================================================
 
 canceladas = int(
@@ -927,7 +1034,7 @@ tasa = tasa_cancelacion(filtrado)
 
 
 # ============================================================
-# VISTA 01 | RESUMEN EJECUTIVO
+# VISTA 01 - RESUMEN EJECUTIVO
 # ============================================================
 
 if codigo_pagina == "01":
@@ -935,6 +1042,7 @@ if codigo_pagina == "01":
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
+
         tarjeta(
             "Órdenes analizadas",
             f"{total:,}",
@@ -942,25 +1050,34 @@ if codigo_pagina == "01":
         )
 
     with c2:
+
         tarjeta(
             "Órdenes completadas",
-            f"{completadas:,}"
+            f"{completadas:,}",
+            "Órdenes finalizadas"
         )
 
     with c3:
+
         tarjeta(
             "Órdenes canceladas",
-            f"{canceladas:,}"
+            f"{canceladas:,}",
+            "Órdenes con target = 1"
         )
 
     with c4:
+
         tarjeta(
             "Tasa de cancelación",
-            f"{tasa:.2f}%"
+            f"{tasa:.2f}%",
+            "Canceladas / órdenes analizadas"
         )
 
+    st.write("")
+
     evolucion = resumen_grupo(
-        filtrado, "mes"
+        filtrado,
+        "mes"
     ).sort_values("mes")
 
     fig = px.line(
@@ -987,9 +1104,9 @@ if codigo_pagina == "01":
         )
     )
 
-    izq, der = st.columns(2)
+    izquierda, derecha = st.columns(2)
 
-    with izq:
+    with izquierda:
 
         fig = go.Figure(
             go.Pie(
@@ -1003,7 +1120,10 @@ if codigo_pagina == "01":
                 ],
                 hole=0.68,
                 marker=dict(
-                    colors=[CYAN, RED]
+                    colors=[
+                        CYAN,
+                        RED
+                    ]
                 ),
                 textinfo="percent+label"
             )
@@ -1016,7 +1136,7 @@ if codigo_pagina == "01":
             )
         )
 
-    with der:
+    with derecha:
 
         if "sales_channel" in filtrado.columns:
 
@@ -1029,30 +1149,31 @@ if codigo_pagina == "01":
 
     if "order_gross_sales" in filtrado.columns:
 
-        bruto = filtrado[
-            "order_gross_sales"
-        ].sum()
+        monto_bruto = (
+            filtrado["order_gross_sales"].sum()
+        )
 
         aviso(
-            f"Monto bruto registrado: {bruto:,.2f}. "
-            "Incluye órdenes completadas y canceladas; "
-            "no representa ingresos realizados."
+            f"Monto bruto registrado: {monto_bruto:,.2f}. "
+            "Incluye órdenes completadas y canceladas. "
+            "No representa ingresos efectivamente realizados."
         )
 
 
 # ============================================================
-# VISTA 02 | ANÁLISIS TEMPORAL
+# VISTA 02 - ANÁLISIS TEMPORAL
 # ============================================================
 
 elif codigo_pagina == "02":
 
     anuales = resumen_grupo(
-        filtrado, "anio"
+        filtrado,
+        "anio"
     ).sort_values("anio")
 
-    izq, der = st.columns(2)
+    izquierda, derecha = st.columns(2)
 
-    with izq:
+    with izquierda:
 
         fig = px.bar(
             anuales,
@@ -1064,11 +1185,11 @@ elif codigo_pagina == "02":
         mostrar(
             tema(
                 fig,
-                "Órdenes por año"
+                "Volumen anual de órdenes"
             )
         )
 
-    with der:
+    with derecha:
 
         fig = px.line(
             anuales,
@@ -1081,12 +1202,13 @@ elif codigo_pagina == "02":
         mostrar(
             tema(
                 fig,
-                "Cancelación anual (%)"
+                "Tasa anual de cancelación"
             )
         )
 
     mensuales = resumen_grupo(
-        filtrado, "mes"
+        filtrado,
+        "mes"
     ).sort_values("mes")
 
     fig = go.Figure()
@@ -1184,18 +1306,17 @@ elif codigo_pagina == "02":
     grafico_tasa(
         dias,
         "nombre_dia",
-        "Cancelación por día de semana"
+        "Cancelación por día de la semana"
     )
 
     aviso(
-        "Los patrones temporales presentados "
-        "son descriptivos y no demuestran "
-        "estacionalidad estadística."
+        "Los patrones temporales son descriptivos. "
+        "No constituyen evidencia estadística de estacionalidad."
     )
 
 
 # ============================================================
-# VISTA 03 | CLIENTES Y SEGMENTOS
+# VISTA 03 - CLIENTES Y SEGMENTOS
 # ============================================================
 
 elif codigo_pagina == "03":
@@ -1205,7 +1326,7 @@ elif codigo_pagina == "03":
         grafico_tasa(
             filtrado,
             "customer_segment",
-            "Cancelación por segmento",
+            "Cancelación por segmento de cliente",
             ordenar=True
         )
 
@@ -1216,8 +1337,13 @@ elif codigo_pagina == "03":
         edad["grupo_edad"] = pd.cut(
             edad["customer_age"],
             bins=[
-                -np.inf, 25, 35, 45,
-                55, 65, np.inf
+                -np.inf,
+                25,
+                35,
+                45,
+                55,
+                65,
+                np.inf
             ],
             labels=[
                 "Hasta 25",
@@ -1232,7 +1358,7 @@ elif codigo_pagina == "03":
         grafico_tasa(
             edad,
             "grupo_edad",
-            "Cancelación por grupo etario"
+            "Cancelación por grupo de edad"
         )
 
     if "customer_order_count" in filtrado.columns:
@@ -1242,8 +1368,13 @@ elif codigo_pagina == "03":
         clientes["rango_frecuencia"] = pd.cut(
             clientes["customer_order_count"],
             bins=[
-                -np.inf, 0, 1, 3,
-                5, 10, np.inf
+                -np.inf,
+                0,
+                1,
+                3,
+                5,
+                10,
+                np.inf
             ],
             labels=[
                 "Sin anteriores",
@@ -1261,9 +1392,9 @@ elif codigo_pagina == "03":
             "Cancelación según órdenes anteriores"
         )
 
-    izq, der = st.columns(2)
+    izquierda, derecha = st.columns(2)
 
-    with izq:
+    with izquierda:
 
         if "customer_recency" in filtrado.columns:
 
@@ -1273,7 +1404,7 @@ elif codigo_pagina == "03":
                 "Recencia histórica por estado"
             )
 
-    with der:
+    with derecha:
 
         if "customer_order_count" in filtrado.columns:
 
@@ -1288,18 +1419,19 @@ elif codigo_pagina == "03":
             grafico_tasa(
                 clientes,
                 "tipo_cliente",
-                "Cancelación según historial"
+                "Cancelación según historial de compras"
             )
 
     aviso(
         "La frecuencia y recencia se calcularon "
-        "con órdenes anteriores a la fecha actual. "
-        "Las asociaciones observadas no implican causalidad."
+        "a partir de órdenes anteriores a la fecha "
+        "de cada transacción. Los resultados muestran "
+        "asociaciones, no relaciones causales."
     )
 
 
 # ============================================================
-# VISTA 04 | ÓRDENES Y OPERACIONES
+# VISTA 04 - ÓRDENES Y OPERACIONES
 # ============================================================
 
 elif codigo_pagina == "04":
@@ -1320,9 +1452,9 @@ elif codigo_pagina == "04":
     ]
 
     disponibles = [
-        (col, etiqueta)
-        for col, etiqueta in variables
-        if col in filtrado.columns
+        (columna, etiqueta)
+        for columna, etiqueta in variables
+        if columna in filtrado.columns
     ]
 
     if disponibles:
@@ -1331,14 +1463,16 @@ elif codigo_pagina == "04":
             len(disponibles)
         )
 
-        for visual_col, (col, etiqueta) in zip(
+        for columna_visual, (columna, etiqueta) in zip(
             columnas,
             disponibles
         ):
 
-            valor = filtrado[col].median()
+            valor = (
+                filtrado[columna].median()
+            )
 
-            with visual_col:
+            with columna_visual:
 
                 tarjeta(
                     etiqueta,
@@ -1347,8 +1481,10 @@ elif codigo_pagina == "04":
                         if pd.notna(valor)
                         else "N/D"
                     ),
-                    "Mediana"
+                    "Mediana de las órdenes filtradas"
                 )
+
+    st.write("")
 
     if "order_quantity" in filtrado.columns:
 
@@ -1357,8 +1493,13 @@ elif codigo_pagina == "04":
         cantidad["rango_cantidad"] = pd.cut(
             cantidad["order_quantity"],
             bins=[
-                -np.inf, 1, 2, 3,
-                5, 10, np.inf
+                -np.inf,
+                1,
+                2,
+                3,
+                5,
+                10,
+                np.inf
             ],
             labels=[
                 "Hasta 1",
@@ -1382,7 +1523,10 @@ elif codigo_pagina == "04":
             subset=["order_gross_sales"]
         ).copy()
 
-        if ventas["order_gross_sales"].nunique() > 1:
+        if (
+            ventas["order_gross_sales"].nunique()
+            > 1
+        ):
 
             ventas["rango_valor"] = pd.qcut(
                 ventas["order_gross_sales"],
@@ -1402,7 +1546,10 @@ elif codigo_pagina == "04":
             subset=["shipping_cost_ratio"]
         ).copy()
 
-        if envios["shipping_cost_ratio"].nunique() > 1:
+        if (
+            envios["shipping_cost_ratio"].nunique()
+            > 1
+        ):
 
             envios["rango_envio"] = pd.qcut(
                 envios["shipping_cost_ratio"],
@@ -1419,9 +1566,10 @@ elif codigo_pagina == "04":
     if disponibles:
 
         variable = st.selectbox(
-            "Variable para analizar distribución",
+            "Variable para comparar distribuciones",
             options=[
-                col for col, _ in disponibles
+                columna
+                for columna, _ in disponibles
             ]
         )
 
@@ -1441,24 +1589,22 @@ elif codigo_pagina == "04":
         )
 
     aviso(
-        "Los importes utilizados provienen "
-        "de la tabla principal de ventas. "
-        "El proyecto identificó discrepancias "
-        "con el detalle de órdenes, por lo que "
-        "los importes no son cifras contables verificadas."
+        "Los importes provienen de la tabla principal "
+        "de ventas. Durante la auditoría se identificaron "
+        "discrepancias frente al detalle de órdenes. "
+        "No se consideran cifras contables verificadas."
     )
 
 
 # ============================================================
-# VISTA 05 | EVALUACIÓN PREDICTIVA
+# VISTA 05 - EVALUACIÓN PREDICTIVA
 # ============================================================
 
 elif codigo_pagina == "05":
 
     st.caption(
-        "Las métricas siguientes corresponden "
-        "al conjunto Test original y no cambian "
-        "con los filtros descriptivos."
+        "Las métricas corresponden al conjunto Test "
+        "original y no cambian con los filtros descriptivos."
     )
 
     columnas = st.columns(5)
@@ -1471,12 +1617,16 @@ elif codigo_pagina == "05":
         ("F1-Score", "f1_score", True)
     ]
 
-    for columna, (nombre, clave, porcentaje) in zip(
+    for columna_visual, (
+        nombre,
+        clave,
+        porcentaje
+    ) in zip(
         columnas,
         indicadores
     ):
 
-        with columna:
+        with columna_visual:
 
             tarjeta(
                 nombre,
@@ -1487,19 +1637,31 @@ elif codigo_pagina == "05":
                 "Test temporal"
             )
 
+    st.write("")
+
+    # --------------------------------------------------------
+    # MATRIZ DE CONFUSIÓN
+    # --------------------------------------------------------
+
     if confusion is not None:
 
         if {
-            "resultado", "cantidad"
+            "resultado",
+            "cantidad"
         }.issubset(confusion.columns):
 
-            valores = dict(zip(
-                confusion["resultado"],
-                confusion["cantidad"]
-            ))
+            valores = dict(
+                zip(
+                    confusion["resultado"],
+                    confusion["cantidad"]
+                )
+            )
 
             claves = [
-                "TN", "FP", "FN", "TP"
+                "TN",
+                "FP",
+                "FN",
+                "TP"
             ]
 
             if all(
@@ -1546,6 +1708,10 @@ elif codigo_pagina == "05":
                     )
                 )
 
+    # --------------------------------------------------------
+    # COMPARACIÓN CON MODELO REFERENCIAL
+    # --------------------------------------------------------
+
     if comparacion is not None:
 
         if {
@@ -1576,26 +1742,32 @@ elif codigo_pagina == "05":
                 )
             )
 
+    # --------------------------------------------------------
+    # EVALUACIÓN DE UMBRALES
+    # --------------------------------------------------------
+
     if umbrales is not None:
 
-        columnas_requeridas = {
+        requeridas = {
             "umbral",
             "precision",
             "recall",
             "f1_score"
         }
 
-        if columnas_requeridas.issubset(
+        if requeridas.issubset(
             umbrales.columns
         ):
 
             fig = go.Figure()
 
-            for variable, nombre, color in [
+            configuracion = [
                 ("precision", "Precision", CYAN),
                 ("recall", "Recall", BLUE),
                 ("f1_score", "F1-Score", GREEN)
-            ]:
+            ]
+
+            for variable, nombre, color in configuracion:
 
                 fig.add_trace(
                     go.Scatter(
@@ -1617,14 +1789,18 @@ elif codigo_pagina == "05":
                 )
             )
 
+    # --------------------------------------------------------
+    # COEFICIENTES DEL MODELO
+    # --------------------------------------------------------
+
     if coeficientes is not None:
 
-        columnas_requeridas = {
+        requeridas = {
             "variable",
             "coeficiente_estandarizado"
         }
 
-        if columnas_requeridas.issubset(
+        if requeridas.issubset(
             coeficientes.columns
         ):
 
@@ -1642,6 +1818,10 @@ elif codigo_pagina == "05":
                 )
             )
 
+    # --------------------------------------------------------
+    # UMBRAL SELECCIONADO
+    # --------------------------------------------------------
+
     if (
         umbral_seleccionado is not None
         and "umbral_seleccionado"
@@ -1657,18 +1837,18 @@ elif codigo_pagina == "05":
         aviso(
             f"Umbral seleccionado mediante validación "
             f"temporal: {mejor_umbral:.2f}. "
-            "Criterio: maximización de F1-Score."
+            "Criterio utilizado: maximización del F1-Score."
         )
 
     st.warning(
-        "El modelo presenta capacidad predictiva "
-        "limitada. No existe evidencia suficiente "
-        "para recomendar su implementación comercial."
+        "El modelo presenta capacidad predictiva limitada. "
+        "No existe evidencia suficiente para recomendar "
+        "su implementación comercial."
     )
 
 
 # ============================================================
-# VISTA 06 | EXPLORADOR DE RIESGO
+# VISTA 06 - EXPLORADOR DE RIESGO
 # ============================================================
 
 elif codigo_pagina == "06":
@@ -1733,30 +1913,46 @@ elif codigo_pagina == "06":
             if pred.empty:
 
                 st.info(
-                    "No hay predicciones válidas."
+                    "No existen predicciones válidas."
                 )
 
             else:
 
+                # --------------------------------------------
+                # KPIs DEL CONJUNTO TEST
+                # --------------------------------------------
+
                 c1, c2, c3 = st.columns(3)
 
                 with c1:
+
                     tarjeta(
                         "Órdenes Test",
-                        f"{len(pred):,}"
+                        f"{len(pred):,}",
+                        "Observaciones evaluadas"
                     )
 
                 with c2:
+
                     tarjeta(
-                        "Mediana probabilidad",
-                        f"{pred['probabilidad_cancelacion'].median():.2%}"
+                        "Mediana de probabilidad",
+                        f"{pred['probabilidad_cancelacion'].median():.2%}",
+                        "Probabilidades estimadas"
                     )
 
                 with c3:
+
                     tarjeta(
                         "Cancelaciones reales",
-                        f"{int(pred['target'].sum()):,}"
+                        f"{int(pred['target'].sum()):,}",
+                        "Target = 1"
                     )
+
+                st.write("")
+
+                # --------------------------------------------
+                # DISTRIBUCIÓN DE PROBABILIDADES
+                # --------------------------------------------
 
                 fig = px.histogram(
                     pred,
@@ -1775,6 +1971,10 @@ elif codigo_pagina == "06":
                         "Distribución de probabilidades por estado"
                     )
                 )
+
+                # --------------------------------------------
+                # SIMULACIÓN DE UMBRAL
+                # --------------------------------------------
 
                 st.subheader(
                     "Simulación visual de umbral"
@@ -1826,48 +2026,56 @@ elif codigo_pagina == "06":
 
                 precision = (
                     tp / (tp + fp)
-                    if tp + fp > 0
+                    if (tp + fp) > 0
                     else 0.0
                 )
 
                 recall = (
                     tp / (tp + fn)
-                    if tp + fn > 0
+                    if (tp + fn) > 0
                     else 0.0
                 )
 
                 f1 = (
                     2 * precision * recall
                     / (precision + recall)
-                    if precision + recall > 0
+                    if (precision + recall) > 0
                     else 0.0
                 )
 
                 c1, c2, c3, c4 = st.columns(4)
 
                 with c1:
+
                     tarjeta(
                         "Precision simulada",
                         f"{precision:.2%}"
                     )
 
                 with c2:
+
                     tarjeta(
                         "Recall simulado",
                         f"{recall:.2%}"
                     )
 
                 with c3:
+
                     tarjeta(
                         "F1 simulado",
                         f"{f1:.2%}"
                     )
 
                 with c4:
+
                     tarjeta(
                         "Falsos positivos",
                         f"{fp:,}"
                     )
+
+                # --------------------------------------------
+                # MATRIZ SIMULADA
+                # --------------------------------------------
 
                 matriz = np.array([
                     [tn, fp],
@@ -1902,6 +2110,10 @@ elif codigo_pagina == "06":
                     )
                 )
 
+                # --------------------------------------------
+                # EXPLORADOR DE ÓRDENES
+                # --------------------------------------------
+
                 st.subheader(
                     "Consulta de órdenes evaluadas"
                 )
@@ -1930,42 +2142,41 @@ elif codigo_pagina == "06":
                 )
 
                 columnas_mostrar = [
-                    col for col in [
+                    columna
+                    for columna in [
                         "order_id",
                         "order_date",
                         "Estado real",
                         "probabilidad_cancelacion",
                         "clasificacion_visual"
                     ]
-                    if col in tabla.columns
+                    if columna in tabla.columns
                 ]
 
                 st.dataframe(
-                    tabla[
-                        columnas_mostrar
-                    ].head(1000),
+                    tabla[columnas_mostrar].head(1000),
                     use_container_width=True,
                     hide_index=True
                 )
 
                 st.warning(
-                    "La modificación visual del umbral "
-                    "sobre Test es únicamente didáctica. "
-                    "No debe utilizarse para optimizar "
-                    "el modelo ni reportar una mejora "
+                    "La simulación de umbrales sobre Test "
+                    "tiene fines exploratorios. No debe "
+                    "utilizarse para seleccionar un nuevo "
+                    "umbral ni presentar una mejora "
                     "predictiva validada."
                 )
 
 
 # ============================================================
-# 12. PIE DE PÁGINA
+# 15. PIE DE PÁGINA
 # ============================================================
 
 st.divider()
 
 st.caption(
     "TAF | Business Data & AI Strategy | "
-    "E-Commerce Cancellation Analytics · "
-    "Metodología CRISP-DM · "
+    "E-Commerce Cancellation Analytics | "
+    "Metodología CRISP-DM | "
     "Asociación no implica causalidad."
 )
